@@ -1,4 +1,4 @@
-# update_horoscope.py (исправленная версия)
+# update_horoscope_advanced.py
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -13,29 +13,24 @@ SIGNS = [
     "libra", "scorpio", "sagittarius", "capricornus", "aquarius", "pisces"
 ]
 
-SIGN_URLS = {
-    "aries": "https://1001goroskop.ru/?znak=aries",
-    "taurus": "https://1001goroskop.ru/?znak=taurus",
-    "gemini": "https://1001goroskop.ru/?znak=gemini",
-    "cancer": "https://1001goroskop.ru/?znak=cancer",
-    "leo": "https://1001goroskop.ru/?znak=leo",
-    "virgo": "https://1001goroskop.ru/?znak=virgo",
-    "libra": "https://1001goroskop.ru/?znak=libra",
-    "scorpio": "https://1001goroskop.ru/?znak=scorpio",
-    "sagittarius": "https://1001goroskop.ru/?znak=sagittarius",
-    "capricornus": "https://1001goroskop.ru/?znak=capricornus",
-    "aquarius": "https://1001goroskop.ru/?znak=aquarius",
-    "pisces": "https://1001goroskop.ru/?znak=pisces"
-}
-
-JSON_OUTPUT = "horoscope.json"
+# Базовые URL для разных типов гороскопов
+BASE_URL = "https://1001goroskop.ru/"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
 }
 
+# Соответствие типов гороскопа параметрам URL
+HOROSCOPE_TYPES = {
+    "general": "",      # общий на сегодня: ?znak=sign
+    "love": "&tm=love", # любовный
+    "business": "&tm=business", # бизнес/работа
+    "tomorrow": "&kn=tomorrow"  # общий на завтра
+}
+
 def get_russian_sign_name(sign: str) -> str:
+    """Переводит английское имя знака в русское."""
     names = {
         "aries": "Овен", "taurus": "Телец", "gemini": "Близнецы",
         "cancer": "Рак", "leo": "Лев", "virgo": "Дева",
@@ -44,46 +39,66 @@ def get_russian_sign_name(sign: str) -> str:
     }
     return names.get(sign, sign.capitalize())
 
-def fetch_horoscope(sign: str) -> dict:
-    url = SIGN_URLS[sign]
+def fetch_horoscope(sign: str, horoscope_type: str) -> dict:
+    """
+    Получает гороскоп для знака sign и указанного типа.
+    horoscope_type: 'general', 'love', 'business', 'tomorrow'
+    """
+    # Формируем URL в зависимости от типа
+    if horoscope_type == "general":
+        url = f"{BASE_URL}?znak={sign}"
+    elif horoscope_type == "tomorrow":
+        url = f"{BASE_URL}?znak={sign}&kn=tomorrow"
+    else: # love или business
+        url = f"{BASE_URL}?znak={sign}{HOROSCOPE_TYPES[horoscope_type]}"
     
     try:
         response = requests.get(url, headers=HEADERS, timeout=15)
         response.raise_for_status()
-        # КРИТИЧЕСКИ ВАЖНО: сайт использует Windows-1251
+        # Сайт использует кодировку Windows-1251
         response.encoding = 'windows-1251'
         soup = BeautifulSoup(response.text, 'html.parser')
     except Exception as e:
-        return {"sign": sign, "error": str(e), "text": None}
+        return {"type": horoscope_type, "error": str(e), "text": None, "url": url}
     
-    # Ищем заголовок (h1)
+    # --- Ищем текст гороскопа ---
+    # Способ 1: Ищем заголовок h1 (например, "Любовный гороскоп на сегодня: Овен")
     title_elem = soup.find('h1')
     title = title_elem.get_text(strip=True) if title_elem else None
     
-    # Ищем текст гороскопа - обычно в первом параграфе после h1
     text = None
+    # Ищем параграф с текстом. Обычно он либо сразу после h1, либо внутри div с контентом.
+    # На сайте текст часто находится в первом же <p> после h1.
     if title_elem:
-        # Ищем следующий параграф после заголовка
         next_p = title_elem.find_next('p')
-        if next_p:
+        if next_p and len(next_p.get_text(strip=True)) > 50:
             text = next_p.get_text(strip=True)
     
-    # Если не нашли, ищем любой параграф с текстом
+    # Способ 2: Если не нашли, ищем любой длинный параграф (вероятно, текст гороскопа)
     if not text:
         for p in soup.find_all('p'):
             p_text = p.get_text(strip=True)
-            if len(p_text) > 100:  # Гороскоп обычно длинный
+            # Гороскоп обычно содержит больше 100 символов
+            if len(p_text) > 100 and not p.find_parent('div', class_='calendar'):
                 text = p_text
                 break
     
-    # Ищем дату
-    date_elem = soup.find('p', string=re.compile(r'\d{1,2}\s+\w+\s+\d{4}'))
+    # --- Ищем дату (если есть) ---
+    # На страницах дата часто в параграфе с классом 'date' или в виде "Четверг, 23 апреля 2026 года"
+    date_elem = None
+    date_pattern = re.compile(r'\d{1,2}\s+\w+\s+\d{4}')
+    for p in soup.find_all('p'):
+        if date_pattern.search(p.get_text()):
+            date_elem = p
+            break
+    
     source_date = date_elem.get_text(strip=True) if date_elem else None
     
     return {
+        "type": horoscope_type,
         "sign": sign,
         "sign_name_ru": get_russian_sign_name(sign),
-        "text": text or "Текст гороскопа не найден",
+        "text": text or f"Текст {horoscope_type} гороскопа не найден",
         "title": title,
         "source_date": source_date,
         "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -91,40 +106,63 @@ def fetch_horoscope(sign: str) -> dict:
     }
 
 def main():
-    print("🌙 Обновление гороскопов с 1001goroskop.ru (кодировка Windows-1251)")
-    print("=" * 50)
+    print("🌙 Расширенный парсер гороскопов с 1001goroskop.ru")
+    print("Сбор: общий (сегодня), любовный, бизнес, общий (завтра)")
+    print("=" * 60)
     
+    # Структура для хранения всех данных:
+    # {
+    #   "aries": {
+    #       "general": {...},
+    #       "love": {...},
+    #       "business": {...},
+    #       "tomorrow": {...}
+    #   },
+    #   ...
+    # }
     all_data = {}
     
     for i, sign in enumerate(SIGNS, 1):
-        print(f"[{i}/12] {get_russian_sign_name(sign)}...", end=" ", flush=True)
+        print(f"\n[{i}/12] Обработка знака: {get_russian_sign_name(sign)}")
+        sign_data = {}
         
-        try:
-            data = fetch_horoscope(sign)
-            all_data[sign] = data
+        for h_type in HOROSCOPE_TYPES.keys():
+            print(f"  ├─ {h_type.upper()}...", end=" ", flush=True)
+            try:
+                data = fetch_horoscope(sign, h_type)
+                sign_data[h_type] = data
+                
+                if "error" in data:
+                    print(f"❌ Ошибка: {data['error']}")
+                else:
+                    # Показываем длину текста для проверки
+                    text_len = len(data.get('text', ''))
+                    print(f"✅ {text_len} символов")
+                    
+            except Exception as e:
+                print(f"❌ Критическая ошибка: {e}")
+                sign_data[h_type] = {"type": h_type, "error": str(e)}
             
-            if "error" in data:
-                print(f"❌ Ошибка: {data['error']}")
-            else:
-                print(f"✅ {len(data['text'])} символов")
-                
-            # Сохраняем после каждого знака
-            with open(JSON_OUTPUT, 'w', encoding='utf-8') as f:
-                json.dump(all_data, f, ensure_ascii=False, indent=2)
-                
-        except Exception as e:
-            print(f"❌ Критическая ошибка: {e}")
-            all_data[sign] = {"sign": sign, "error": str(e)}
+            # Небольшая пауза между запросами для одного знака, чтобы не перегружать сервер
+            time.sleep(0.5)
         
-        time.sleep(1)  # Пауза между запросами
+        all_data[sign] = sign_data
+        
+        # Сохраняем промежуточный результат после каждого знака
+        with open("horoscope_advanced.json", 'w', encoding='utf-8') as f:
+            json.dump(all_data, f, ensure_ascii=False, indent=2)
+        
+        # Пауза между разными знаками
+        time.sleep(1)
     
-    print("\n" + "=" * 50)
-    print(f"✅ Сохранено в {JSON_OUTPUT}")
+    print("\n" + "=" * 60)
+    print(f"✅ Полные данные сохранены в horoscope_advanced.json")
     
-    # Проверка - покажем первый гороскоп
-    if "aries" in all_data and "text" in all_data["aries"]:
-        print("\n📖 Пример (Овен):")
-        print(all_data["aries"]["text"][:200] + "...")
+    # Выводим небольшой пример для проверки (Овен, любовный)
+    if "aries" in all_data and "love" in all_data["aries"]:
+        print("\n📖 Пример (Овен, любовный гороскоп):")
+        love_text = all_data["aries"]["love"].get("text", "Нет текста")
+        print(love_text[:250] + "..." if len(love_text) > 250 else love_text)
 
 if __name__ == "__main__":
     main()
