@@ -1105,7 +1105,8 @@
                 setTimeout(() => {
                     const btn = document.getElementById('compat-permission-btn');
                     if (btn) {
-                        btn.addEventListener('click', async () => {
+                        btn.addEventListener('click', async (e) => {
+                            e.stopPropagation();
                             const hasPermission = await requestFriendsPermission();
                             if (hasPermission) {
                                 updateFriendsPermissionUI();
@@ -1433,7 +1434,8 @@
             document.getElementById('permission-modal-close-btn').addEventListener('click', closePermissionModal);
 
             // Обработчик кнопки запроса прав на друзей - теперь сразу запрашиваем права без модального окна
-            document.getElementById('request-friends-btn').addEventListener('click', async () => {
+            document.getElementById('request-friends-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
                 const hasPermission = await requestFriendsPermission();
                 if (hasPermission) {
                     updateFriendsPermissionUI();
@@ -1468,6 +1470,9 @@
                 btn.addEventListener('click', (e) => {
                     const target = e.currentTarget;
                     const type = target.dataset.tab;
+
+                    // Если клик по кнопке запроса прав внутри списка - игнорируем (она обрабатывается отдельно)
+                    if (target.id === 'compat-permission-btn') return;
 
                     // Для вкладки совместимости проверяем права и рендерим
                     if (type === 'compatibility') {
