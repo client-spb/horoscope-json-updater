@@ -1477,6 +1477,9 @@
                         }
 
                         openModal(target.innerText.trim(), text, currentSignKey);
+                        
+                        // Обновляем список друзей для текущего знака (чтобы убрать список совместимости)
+                        renderFriendsForSign(currentSignKey);
                     }
                 });
             });
