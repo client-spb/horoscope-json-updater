@@ -739,6 +739,14 @@
 
                 <div class="detail-content-scroll">
                     <div class="scrollable-wrapper">
+                        <!-- Кнопка запроса прав на друзей -->
+                        <div id="friends-permission-block" style="display: none; margin-bottom: 12px;">
+                            <button class="tab-btn" id="request-friends-btn" style="width: 100%; padding: 12px; flex-direction: row; justify-content: center; gap: 8px;">
+                                <span>👥</span>
+                                <span>Показать друзей этого знака</span>
+                            </button>
+                        </div>
+                        
                         <div class="friends-label" id="friends-label">
                             <span>👥</span> Твои друзья этого же знака:
                         </div>
@@ -778,6 +786,37 @@
             </div>
 
             <!-- Пустой подвал (реклама убрана отсюда) -->
+            <div class="modal-footer-ad"></div>
+            
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ЗАПРОСА ПРАВ НА ДРУЗЕЙ -->
+    <div class="modal-overlay" id="permission-modal-overlay">
+        <div class="modal-content" style="height: auto; max-height: 80%;">
+            
+            <!-- Фиксированная шапка -->
+            <div class="modal-header-fixed">
+                <div class="modal-header-info">
+                    <div class="modal-titles">
+                        <div class="modal-title" id="permission-modal-title">Доступ к друзьям</div>
+                        <div class="modal-subtitle" id="permission-modal-subtitle">Важная информация</div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="permission-modal-close-btn">×</button>
+            </div>
+
+            <!-- Скроллящийся текст -->
+            <div class="modal-body-scroll">
+                <div class="modal-text-body" id="permission-modal-text" style="text-align: left;"></div>
+                
+                <button class="tab-btn" id="permission-grant-btn" style="width: 100%; padding: 14px; flex-direction: row; justify-content: center; gap: 8px; margin-top: 20px;">
+                    <span>👥</span>
+                    <span>Разрешить доступ к друзьям</span>
+                </button>
+            </div>
+
+            <!-- Пустой подвал -->
             <div class="modal-footer-ad"></div>
             
         </div>
@@ -871,6 +910,8 @@
             return 'pisces';
         }
 
+        let friendsPermissionGranted = false;
+
         async function requestFriendsPermission() {
             if (!vkBridge) return false;
             try {
@@ -880,6 +921,7 @@
                 });
                 if (result && result.access_token) {
                     vkAccessToken = result.access_token;
+                    friendsPermissionGranted = true;
                     return true;
                 }
             } catch (error) { return false; }
@@ -920,15 +962,68 @@
             } catch (error) {
                 if (error.error_data?.error_code === 2) {
                     vkAccessToken = null;
+                    friendsPermissionGranted = false;
                     return await fetchRealFriends();
                 }
             }
             return [];
         }
 
+        // Функция для показа информационного модального окна перед запросом прав
+        function showPermissionInfoModal(context) {
+            const modal = document.getElementById('permission-modal-overlay');
+            const titleEl = document.getElementById('permission-modal-title');
+            const subtitleEl = document.getElementById('permission-modal-subtitle');
+            const textEl = document.getElementById('permission-modal-text');
+            
+            if (context === 'friends') {
+                titleEl.innerText = "Друзья этого знака";
+                subtitleEl.innerText = "Зачем это нужно?";
+                textEl.innerHTML = `
+                    <p style="margin-bottom: 12px;">Чтобы показать вам друзей, которые родились под тем же знаком зодиака, нам нужен доступ к вашему списку друзей.</p>
+                    <p style="margin-bottom: 12px;"><strong>Мы используем эти данные только для:</strong></p>
+                    <ul style="margin-left: 20px; margin-bottom: 12px; color: #b9b9e6;">
+                        <li>Определения знака зодиака ваших друзей</li>
+                        <li>Показа друзей того же знака в этом разделе</li>
+                        <li>Расчёта совместимости в разделе "Совместимость"</li>
+                    </ul>
+                    <p style="color: #888; font-size: 0.9rem;">Ваши данные не передаются третьим лицам и используются только внутри приложения.</p>
+                `;
+            } else if (context === 'compatibility') {
+                titleEl.innerText = "Совместимость с друзьями";
+                subtitleEl.innerText = "Зачем это нужно?";
+                textEl.innerHTML = `
+                    <p style="margin-bottom: 12px;">Чтобы рассчитать вашу совместимость с друзьями по знаку зодиака, нам нужен доступ к вашему списку друзей.</p>
+                    <p style="margin-bottom: 12px;"><strong>Мы используем эти данные только для:</strong></p>
+                    <ul style="margin-left: 20px; margin-bottom: 12px; color: #b9b9e6;">
+                        <li>Определения знака зодиака ваших друзей</li>
+                        <li>Расчёта процента совместимости между вами</li>
+                        <li>Показа топ-30 наиболее совместимых друзей</li>
+                    </ul>
+                    <p style="color: #888; font-size: 0.9rem;">Ваши данные не передаются третьим лицам и используются только внутри приложения.</p>
+                `;
+            }
+            
+            modal.classList.add('visible');
+        }
+
+        function closePermissionModal() {
+            const modal = document.getElementById('permission-modal-overlay');
+            modal.classList.remove('visible');
+        }
+
         async function renderFriendsForSign(targetSignKey) {
             const container = document.getElementById('friends-list');
             const label = document.getElementById('friends-label');
+            
+            // Если права еще не предоставлены, показываем сообщение и не загружаем данные
+            if (!friendsPermissionGranted) {
+                container.innerHTML = '<div style="padding:10px; color:#666; font-size:0.8rem; width:100%; text-align:center;">Нажмите кнопку выше, чтобы увидеть друзей этого знака ✨</div>';
+                label.style.display = 'none';
+                return;
+            }
+            
+            label.style.display = 'flex';
             container.innerHTML = '<div style="padding:10px; color:#666; font-size:0.8rem; width:100%; text-align:center;">Загрузка...</div>';
             label.innerHTML = '<span>👥</span> Друзья этого знака:';
 
@@ -977,6 +1072,15 @@
         async function renderFriendsCompatibility(mySignKey) {
             const container = document.getElementById('friends-list');
             const label = document.getElementById('friends-label');
+            
+            // Если права еще не предоставлены, показываем сообщение и не загружаем данные
+            if (!friendsPermissionGranted) {
+                container.innerHTML = '<div style="padding:10px; color:#666; font-size:0.8rem; width:100%; text-align:center;">Нажмите кнопку "Показать друзей этого знака", чтобы увидеть совместимость ✨</div>';
+                label.style.display = 'none';
+                return;
+            }
+            
+            label.style.display = 'flex';
             container.innerHTML = '<div style="padding:10px; color:#666; font-size:0.8rem; width:100%; text-align:center;">Считаем звезды...</div>';
             label.innerHTML = '<span>⚡</span> Твоя совместимость:';
 
@@ -1167,7 +1271,20 @@
 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
             resetTomorrowButton();
-            renderFriendsForSign(key);
+            
+            // Показываем или скрываем кнопку запроса прав в зависимости от статуса
+            const permissionBlock = document.getElementById('friends-permission-block');
+            const label = document.getElementById('friends-label');
+            
+            if (!friendsPermissionGranted) {
+                permissionBlock.style.display = 'block';
+                label.style.display = 'none';
+                renderFriendsForSign(key); // Покажет сообщение о необходимости нажать кнопку
+            } else {
+                permissionBlock.style.display = 'none';
+                label.style.display = 'flex';
+                renderFriendsForSign(key); // Загрузит друзей
+            }
 
             document.getElementById('main-header').style.display = 'none';
             document.getElementById('selection-screen').classList.remove('active');
@@ -1273,6 +1390,25 @@
             loadHoroscopeData();
 
             document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+            document.getElementById('permission-modal-close-btn').addEventListener('click', closePermissionModal);
+
+            // Обработчик кнопки запроса прав на друзей
+            document.getElementById('request-friends-btn').addEventListener('click', () => {
+                showPermissionInfoModal('friends');
+            });
+
+            // Обработчик кнопки подтверждения в модальном окне прав
+            document.getElementById('permission-grant-btn').addEventListener('click', async () => {
+                const hasPermission = await requestFriendsPermission();
+                if (hasPermission) {
+                    closePermissionModal();
+                    // После предоставления прав обновляем список друзей для текущего знака
+                    renderFriendsForSign(currentSignKey);
+                } else {
+                    alert('Не удалось получить доступ к друзьям. Попробуйте позже.');
+                    closePermissionModal();
+                }
+            });
 
             document.getElementById('back-button').addEventListener('click', () => {
                 document.getElementById('horoscope-screen').classList.remove('active');
@@ -1288,14 +1424,15 @@
                     const target = e.currentTarget;
                     const type = target.dataset.tab;
 
-                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
-                    target.classList.add('active-tab');
-
+                    // Для вкладки совместимости тоже проверяем права
                     if (type === 'compatibility') {
+                        if (!friendsPermissionGranted) {
+                            showPermissionInfoModal('compatibility');
+                            return;
+                        }
                         renderFriendsCompatibility(currentSignKey);
                     } else {
-                        renderFriendsForSign(currentSignKey); 
-
+                        // Для остальных вкладок (general, love, business) - просто открываем модалку с текстом
                         let text = "Загрузка...";
                         if (horoscopeCache && horoscopeCache[currentSignKey] && horoscopeCache[currentSignKey][type]) {
                             text = horoscopeCache[currentSignKey][type].text;
