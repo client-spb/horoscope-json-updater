@@ -741,9 +741,9 @@
                     <div class="scrollable-wrapper">
                         <!-- Кнопка запроса прав на друзей -->
                         <div id="friends-permission-block" style="display: none; margin-bottom: 12px;">
-                            <button class="tab-btn" id="request-friends-btn" style="width: 100%; padding: 12px; flex-direction: row; justify-content: center; gap: 8px;">
-                                <span>👥</span>
-                                <span>Показать друзей этого знака</span>
+                            <button class="tab-btn" id="request-friends-btn" style="width: 100%; padding: 8px 12px; flex-direction: row; justify-content: center; gap: 6px; background: linear-gradient(135deg, #4a9eff, #2b7ce0); border-color: transparent; font-size: 0.75rem;">
+                                <span style="font-size: 1.1rem;">👥</span>
+                                <span>Друзья этого знака</span>
                             </button>
                         </div>
                         
@@ -793,25 +793,25 @@
 
     <!-- МОДАЛЬНОЕ ОКНО ЗАПРОСА ПРАВ НА ДРУЗЕЙ -->
     <div class="modal-overlay" id="permission-modal-overlay">
-        <div class="modal-content" style="height: auto; max-height: 80%;">
+        <div class="modal-content" style="height: auto; max-height: 70%;">
             
             <!-- Фиксированная шапка -->
-            <div class="modal-header-fixed">
+            <div class="modal-header-fixed" style="padding: 15px 16px 8px 16px;">
                 <div class="modal-header-info">
                     <div class="modal-titles">
-                        <div class="modal-title" id="permission-modal-title">Доступ к друзьям</div>
-                        <div class="modal-subtitle" id="permission-modal-subtitle">Важная информация</div>
+                        <div class="modal-title" id="permission-modal-title" style="font-size: 1.1rem;">Доступ к друзьям</div>
+                        <div class="modal-subtitle" id="permission-modal-subtitle" style="font-size: 0.7rem;">Важная информация</div>
                     </div>
                 </div>
-                <button class="modal-close-btn" id="permission-modal-close-btn">×</button>
+                <button class="modal-close-btn" id="permission-modal-close-btn" style="width: 32px; height: 32px; font-size: 1.2rem;">×</button>
             </div>
 
             <!-- Скроллящийся текст -->
-            <div class="modal-body-scroll">
-                <div class="modal-text-body" id="permission-modal-text" style="text-align: left;"></div>
+            <div class="modal-body-scroll" style="padding: 8px 16px;">
+                <div class="modal-text-body" id="permission-modal-text" style="text-align: left; font-size: 0.9rem; line-height: 1.5;"></div>
                 
-                <button class="tab-btn" id="permission-grant-btn" style="width: 100%; padding: 14px; flex-direction: row; justify-content: center; gap: 8px; margin-top: 20px;">
-                    <span>👥</span>
+                <button class="tab-btn" id="permission-grant-btn" style="width: 100%; padding: 12px; flex-direction: row; justify-content: center; gap: 8px; margin-top: 16px; font-size: 0.85rem;">
+                    <span style="font-size: 1.1rem;">👥</span>
                     <span>Разрешить доступ к друзьям</span>
                 </button>
             </div>
@@ -980,27 +980,25 @@
                 titleEl.innerText = "Друзья этого знака";
                 subtitleEl.innerText = "Зачем это нужно?";
                 textEl.innerHTML = `
-                    <p style="margin-bottom: 12px;">Чтобы показать вам друзей, которые родились под тем же знаком зодиака, нам нужен доступ к вашему списку друзей.</p>
-                    <p style="margin-bottom: 12px;"><strong>Мы используем эти данные только для:</strong></p>
-                    <ul style="margin-left: 20px; margin-bottom: 12px; color: #b9b9e6;">
-                        <li>Определения знака зодиака ваших друзей</li>
-                        <li>Показа друзей того же знака в этом разделе</li>
-                        <li>Расчёта совместимости в разделе "Совместимость"</li>
+                    <p style="margin-bottom: 10px; font-size: 0.9rem;">Чтобы показать друзей, родившихся под тем же знаком зодиака, нужен доступ к вашему списку друзей.</p>
+                    <p style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem;">Мы используем данные только для:</p>
+                    <ul style="margin-left: 16px; margin-bottom: 10px; color: #b9b9e6; font-size: 0.85rem; line-height: 1.4;">
+                        <li>Определения знака зодиака друзей</li>
+                        <li>Показа друзей того же знака</li>
                     </ul>
-                    <p style="color: #888; font-size: 0.9rem;">Ваши данные не передаются третьим лицам и используются только внутри приложения.</p>
+                    <p style="color: #888; font-size: 0.8rem;">Данные не передаются третьим лицам.</p>
                 `;
             } else if (context === 'compatibility') {
                 titleEl.innerText = "Совместимость с друзьями";
                 subtitleEl.innerText = "Зачем это нужно?";
                 textEl.innerHTML = `
-                    <p style="margin-bottom: 12px;">Чтобы рассчитать вашу совместимость с друзьями по знаку зодиака, нам нужен доступ к вашему списку друзей.</p>
-                    <p style="margin-bottom: 12px;"><strong>Мы используем эти данные только для:</strong></p>
-                    <ul style="margin-left: 20px; margin-bottom: 12px; color: #b9b9e6;">
-                        <li>Определения знака зодиака ваших друзей</li>
-                        <li>Расчёта процента совместимости между вами</li>
-                        <li>Показа топ-30 наиболее совместимых друзей</li>
+                    <p style="margin-bottom: 10px; font-size: 0.9rem;">Чтобы рассчитать совместимость по знаку зодиака, нужен доступ к вашему списку друзей.</p>
+                    <p style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem;">Мы используем данные только для:</p>
+                    <ul style="margin-left: 16px; margin-bottom: 10px; color: #b9b9e6; font-size: 0.85rem; line-height: 1.4;">
+                        <li>Определения знака зодиака друзей</li>
+                        <li>Расчёта процента совместимости</li>
                     </ul>
-                    <p style="color: #888; font-size: 0.9rem;">Ваши данные не передаются третьим лицам и используются только внутри приложения.</p>
+                    <p style="color: #888; font-size: 0.8rem;">Данные не передаются третьим лицам.</p>
                 `;
             }
             
