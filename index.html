@@ -755,8 +755,8 @@
                     <div class="scrollable-wrapper">
                         <!-- Кнопка запроса прав на друзей -->
                         <div id="friends-permission-block" style="display: none; margin-bottom: 12px;">
-                            <button class="tab-btn" id="request-friends-btn" style="width: 100%; padding: 8px 12px; flex-direction: row; justify-content: center; gap: 6px; background: linear-gradient(135deg, #4a9eff, #2b7ce0); border-color: transparent; font-size: 0.75rem;">
-                                <span style="font-size: 1.1rem;">👥</span>
+                            <button class="tab-btn" id="request-friends-btn" style="width: 100%; padding: 6px 10px; flex-direction: row; justify-content: center; gap: 6px; background: linear-gradient(135deg, #4a9eff, #2b7ce0); border-color: transparent; font-size: 0.7rem; min-height: 32px;" data-no-modal="true">
+                                <span style="font-size: 1rem;">👥</span>
                                 <span>Друзья этого знака</span>
                             </button>
                         </div>
@@ -1485,8 +1485,8 @@
                     const target = e.currentTarget;
                     const type = target.dataset.tab;
 
-                    // Если клик по кнопке запроса прав внутри списка - игнорируем (она обрабатывается отдельно)
-                    if (target.id === 'compat-permission-btn') return;
+                    // Если клик по кнопке запроса прав - игнорируем (она обрабатывается отдельно)
+                    if (target.id === 'compat-permission-btn' || target.id === 'request-friends-btn') return;
 
                     // Для вкладки совместимости проверяем права и рендерим
                     if (type === 'compatibility') {
