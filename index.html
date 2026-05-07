@@ -1080,44 +1080,37 @@
             } catch (err) { console.error(err); }
         }
 
-       async function loadHoroscopeData() {
-            const loadingEl = document.getElementById('loading');
-            const gridEl = document.getElementById('signs-grid');
-            loadingEl.style.display = 'block';
-            gridEl.style.display = 'none';
-            
-            // Загружаем профиль пользователя
-            fetchUserData();
+     async function loadHoroscopeData() {
+    const loadingEl = document.getElementById('loading');
+    const gridEl = document.getElementById('signs-grid');
+    loadingEl.style.display = 'block';
+    gridEl.style.display = 'none';
+    
+    fetchUserData();
 
-            // --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
-            // Добавляем текущее время в миллисекундах к URL. 
-            // Это гарантирует, что каждый запрос будет уникальным и браузер не использует кэш.
-            const baseUrl = 'https://raw.githubusercontent.com/client-spb/horoscope-json-updater/refs/heads/main/horoscope_advanced.json';
-            const uniqueUrl = `${baseUrl}?t=${new Date().getTime()}`;
-            // -----------------------
-
-            try {
-                // Делаем запрос по уникальной ссылке
-                const response = await fetch(uniqueUrl);
-                if (!response.ok) throw new Error('Net err');
-                
-                horoscopeCache = await response.json();
-                
-                // Опционально: можно сохранить в localStorage для оффлайн-режима, 
-                // но при следующем запуске мы все равно попробуем скачать свежий.
-                localStorage.setItem('horoscope_data_cache', JSON.stringify(horoscopeCache));
-                
-            } catch (err) {
-                console.error("Ошибка загрузки гороскопа:", err);
-                
-                // Если интернета нет или ошибка, пробуем показать последний сохраненный
-                const cachedData = localStorage.getItem('horoscope_data_cache');
-                if (cachedData) {
-                    horoscopeCache = JSON.parse(cachedData);
-                } else {
-                    generateFallbackData();
-                }
-            }
+    // ИЗМЕНЕНИЕ: для локального файла
+    const baseUrl = './horoscope_advanced.json'; // или 'horoscope_advanced.json'
+    // Убираем параметр времени для локального файла
+    const uniqueUrl = baseUrl;
+    
+    try {
+        const response = await fetch(uniqueUrl);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        horoscopeCache = await response.json();
+        localStorage.setItem('horoscope_data_cache', JSON.stringify(horoscopeCache));
+        
+    } catch (err) {
+        console.error("Ошибка загрузки гороскопа:", err);
+        
+        // Если интернета нет или ошибка, пробуем показать последний сохраненный
+        const cachedData = localStorage.getItem('horoscope_data_cache');
+        if (cachedData) {
+            horoscopeCache = JSON.parse(cachedData);
+        } else {
+            generateFallbackData();
+        }
+    }
 
             renderGrid();
             loadingEl.style.display = 'none';
