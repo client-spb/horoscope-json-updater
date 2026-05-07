@@ -922,6 +922,7 @@
                 if (result && result.access_token) {
                     vkAccessToken = result.access_token;
                     friendsPermissionGranted = true;
+                    updateFriendsPermissionUI();
                     return true;
                 }
             } catch (error) { return false; }
@@ -1067,6 +1068,20 @@
             });
         }
 
+        // Функция обновления UI после предоставления прав на друзей
+        function updateFriendsPermissionUI() {
+            friendsPermissionGranted = true;
+            
+            // Обновляем блок кнопки запроса прав
+            const permissionBlock = document.getElementById('friends-permission-block');
+            if (permissionBlock) {
+                permissionBlock.style.display = 'none';
+            }
+            
+            // Обновляем список друзей для текущего знака
+            renderFriendsForSign(currentSignKey);
+        }
+
         async function renderFriendsCompatibility(mySignKey) {
             const container = document.getElementById('friends-list');
             const label = document.getElementById('friends-label');
@@ -1075,6 +1090,7 @@
             // Если права еще не предоставлены, показываем кнопку запроса прав в списке совместимости
             if (!friendsPermissionGranted) {
                 label.style.display = 'none';
+                permissionBlock.style.display = 'none';
                 container.innerHTML = `
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 10px; width: 100%;">
                         <div style="font-size: 0.85rem; color: #888; margin-bottom: 12px; text-align: center;">Для расчёта совместимости нужен доступ к друзьям</div>
@@ -1092,6 +1108,7 @@
                         btn.addEventListener('click', async () => {
                             const hasPermission = await requestFriendsPermission();
                             if (hasPermission) {
+                                updateFriendsPermissionUI();
                                 renderFriendsCompatibility(mySignKey);
                             } else {
                                 alert('Не удалось получить доступ к друзьям. Попробуйте позже.');
@@ -1425,8 +1442,8 @@
                 const hasPermission = await requestFriendsPermission();
                 if (hasPermission) {
                     closePermissionModal();
-                    // После предоставления прав обновляем список друзей для текущего знака
-                    renderFriendsForSign(currentSignKey);
+                    // После предоставления прав обновляем UI для обоих разделов
+                    updateFriendsPermissionUI();
                 } else {
                     alert('Не удалось получить доступ к друзьям. Попробуйте позже.');
                     closePermissionModal();
