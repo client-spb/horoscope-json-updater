@@ -1432,9 +1432,14 @@
             document.getElementById('modal-close-btn').addEventListener('click', closeModal);
             document.getElementById('permission-modal-close-btn').addEventListener('click', closePermissionModal);
 
-            // Обработчик кнопки запроса прав на друзей
-            document.getElementById('request-friends-btn').addEventListener('click', () => {
-                showPermissionInfoModal('friends');
+            // Обработчик кнопки запроса прав на друзей - теперь сразу запрашиваем права без модального окна
+            document.getElementById('request-friends-btn').addEventListener('click', async () => {
+                const hasPermission = await requestFriendsPermission();
+                if (hasPermission) {
+                    updateFriendsPermissionUI();
+                } else {
+                    alert('Не удалось получить доступ к друзьям. Попробуйте позже.');
+                }
             });
 
             // Обработчик кнопки подтверждения в модальном окне прав
