@@ -1070,11 +1070,36 @@
         async function renderFriendsCompatibility(mySignKey) {
             const container = document.getElementById('friends-list');
             const label = document.getElementById('friends-label');
+            const permissionBlock = document.getElementById('friends-permission-block');
             
-            // Если права еще не предоставлены, показываем сообщение и не загружаем данные
+            // Если права еще не предоставлены, показываем кнопку запроса прав в списке совместимости
             if (!friendsPermissionGranted) {
-                container.innerHTML = '<div style="padding:10px; color:#666; font-size:0.8rem; width:100%; text-align:center;">Нажмите кнопку "Показать друзей этого знака", чтобы увидеть совместимость ✨</div>';
                 label.style.display = 'none';
+                container.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 10px; width: 100%;">
+                        <div style="font-size: 0.85rem; color: #888; margin-bottom: 12px; text-align: center;">Для расчёта совместимости нужен доступ к друзьям</div>
+                        <button id="compat-permission-btn" class="tab-btn" style="width: 100%; max-width: 280px; padding: 10px 16px; flex-direction: row; justify-content: center; gap: 8px; background: linear-gradient(135deg, #4a9eff, #2b7ce0); border-color: transparent; font-size: 0.8rem;">
+                            <span style="font-size: 1.1rem;">👥</span>
+                            <span>Разрешить доступ к друзьям</span>
+                        </button>
+                    </div>
+                `;
+                
+                // Добавляем обработчик на кнопку
+                setTimeout(() => {
+                    const btn = document.getElementById('compat-permission-btn');
+                    if (btn) {
+                        btn.addEventListener('click', async () => {
+                            const hasPermission = await requestFriendsPermission();
+                            if (hasPermission) {
+                                renderFriendsCompatibility(mySignKey);
+                            } else {
+                                alert('Не удалось получить доступ к друзьям. Попробуйте позже.');
+                            }
+                        });
+                    }
+                }, 0);
+                
                 return;
             }
             
@@ -1422,12 +1447,8 @@
                     const target = e.currentTarget;
                     const type = target.dataset.tab;
 
-                    // Для вкладки совместимости тоже проверяем права
+                    // Для вкладки совместимости проверяем права и рендерим
                     if (type === 'compatibility') {
-                        if (!friendsPermissionGranted) {
-                            showPermissionInfoModal('compatibility');
-                            return;
-                        }
                         renderFriendsCompatibility(currentSignKey);
                     } else {
                         // Для остальных вкладок (general, love, business) - просто открываем модалку с текстом
