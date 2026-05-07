@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>✨ Звёздный Гид | Гороскоп</title>
+    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #9b4dff;
+            --primary-dark: #7a2be0;
+            --secondary: #ff80b5;
+            --bg-dark: #0b0b16;
+            --bg-card: #131329;
+            --bg-card-hover: #1e1e3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b9b9e6;
+            --ad-gradient: linear-gradient(135deg, #ff99cc, #c05c9e);
+            --success-gradient: linear-gradient(135deg, #2be07a, #1fa855);
+            --primary-gradient: linear-gradient(135deg, #9b4dff, #7a2be0);
+            --border-radius-md: 12px;
+            --glass-bg: rgba(20, 20, 40, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at 10% 20%, #12122a, #05050c);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app {
+            max-width: 500px;
+            margin: 0 auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .main-header {
+            padding: 10px 20px;
+            text-align: center;
+            background: rgba(15, 15, 26, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(155, 77, 255, 0.15);
+            z-index: 20;
+            flex-shrink: 0;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-header h1 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            background: linear-gradient(145deg, #ffffff, #c084fc, #ff99cc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .screen-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            flex-direction: column;
+            animation: fadeSlideUp 0.3s cubic-bezier(0.2, 0.9, 0.4, 1);
+            padding: 0 12px;
+            height: 100%;
+            width: 100%;
+            background: radial-gradient(circle at 10% 20%, #12122a, #05050c);
+            padding-bottom: 60px; 
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- ГЛАВНЫЙ ЭКРАН --- */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            background: rgba(30, 30, 58, 0.6);
+            border: 1px solid rgba(155, 77, 255, 0.2);
+            border-radius: 16px;
+            padding: 10px;
+            flex-shrink: 0;
+            width: 100%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            margin-right: 12px;
+            background: #2a2a4a;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-greeting {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .user-zodiac {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(90deg, #fff, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .signs-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            flex: 1;
+            align-content: start;
+            justify-content: center;
+            width: 100%;
+            padding-bottom: 20px;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .signs-grid::-webkit-scrollbar { display: none; }
+
+        .sign-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius-md);
+            padding: 8px 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(155, 77, 255, 0.15);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 1/1.1;
+        }
+
+        .sign-card:active {
+            transform: scale(0.94);
+            background: var(--bg-card-hover);
+            border-color: var(--primary);
+        }
+
+        .sign-img {
+            width: 60%;
+            height: 60%;
+            object-fit: contain;
+            margin-bottom: 6px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .sign-name {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #f0eefc;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        /* --- ЭКРАН ДЕТАЛЬНОГО ГОРОСКОПА --- */
+        .detail-nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0 10px 0;
+            flex-shrink: 0;
+        }
+
+        .back-btn-text {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            padding: 6px 12px;
+            transition: all 0.2s;
+        }
+        .back-btn-text:active { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+        .current-date-display {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .control-panel {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 5px 0;
+            flex-shrink: 0;
+        }
+
+        .sign-identity-card {
+            flex: 0 0 auto;
+            background: rgba(30, 30, 58, 0.4);
+            border: 1px solid rgba(155, 77, 255, 0.15);
+            border-radius: 16px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin-bottom: 6px;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .sign-hero-img {
+            width:50px;
+            height: 50px;
+            object-fit: contain;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 0 12px rgba(155, 77, 255, 0.4));
+        }
+
+        .sign-hero-name {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 4px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .sign-hero-date {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.2;
+        }
+
+        .actions-column {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tabs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .tab-btn {
+            background: rgba(53, 48, 66, 0.6);
+            border: 1px solid rgba(155, 77, 255, 0.2);
+            border-radius: 12px;
+            color: #dcdcf5;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1);
+            position: relative;
+            overflow: hidden;
+            padding: 8px;
+            backdrop-filter: blur(4px);
+        }
+
+        .tab-btn span { 
+            font-size: 1.4rem; 
+            margin-bottom: 2px; 
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+        }
+
+        .tab-btn:active { transform: scale(0.96); }
+
+        .tab-btn.active-tab {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(155, 77, 255, 0.4);
+        }
+        
+        .tab-btn:not(.active-tab):active {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(155, 77, 255, 0.4);
+        }
+
+        .reward-btn {
+            min-height: 60px;
+            width: 100%;
+            background: linear-gradient(135deg, #2a2a4a, #1e1e3a);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px;
+            color: #8888aa;
+            font-weight: 700;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .reward-btn.unlocked {
+            background: var(--success-gradient);
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 15px rgba(43, 224, 122, 0.3);
+            animation: pulseGreen 2s infinite;
+        }
+
+        @keyframes pulseGreen {
+            0% { box-shadow: 0 0 0 0 rgba(43, 224, 122, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(43, 224, 122, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(43, 224, 122, 0); }
+        }
+
+        .reward-btn:active { transform: scale(0.98); }
+        
+        .reward-btn:disabled { 
+            opacity: 1; 
+            cursor: not-allowed; 
+        }
+
+        .ad-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-size: 0.6rem;
+            background: rgba(0, 0, 0, 0.4);
+            color: rgba(255,255,255,0.7);
+            padding: 3px 6px;
+            border-bottom-left-radius: 8px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .detail-content-scroll {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+            background: rgba(19, 19, 41, 0.3);
+            border-radius: 20px 20px 0 0;
+            border-top: 1px solid rgba(155, 77, 255, 0.1);
+            margin-top: 5px;
+        }
+
+        .scrollable-wrapper {
+            flex: 1;
+            padding: 6px;
+            scrollbar-width: none;
+        }
+        .scrollable-wrapper::-webkit-scrollbar { display: none; }
+
+        .friends-label {
+            font-size: 0.85rem;
+            color: #dcdcf5;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .friends-strip {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .friends-strip::-webkit-scrollbar { display: none; }
+
+        .friend-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+        }
+
+        .friend-avatar-wrapper {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            margin-bottom: 4px;
+            box-shadow: 0 2px 8px rgba(155, 77, 255, 0.2);
+        }
+
+        .friend-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--bg-dark);
+            background-color: #2a2a4a;
+        }
+
+        .friend-name {
+            font-size: 0.65rem;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 60px;
+            text-align: center;
+        }
+
+        .compat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 70px;
+            background: rgba(30, 30, 58, 0.5);
+            padding: 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(155, 77, 255, 0.1);
+        }
+
+        .compat-bar-bg {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .compat-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease-out;
+        }
+
+        .compat-score {
+            font-size: 0.65rem;
+            font-weight: 700;
+            margin-top: 3px;
+        }
+
+        /* --- НОВОЕ МОДАЛЬНОЕ ОКНО (СТЕКЛО) --- */
+        .modal-overlay {
+            position: fixed;
+            /* Отступ 16px от всех краев экрана */
+            inset: 16px; 
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* Прижимаем к низу для анимации выезда */
+            pointer-events: none; /* Чтобы клики проходили сквозь невидимую часть */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            width: 100%;
+            height: 100%; /* Занимает всю доступную высоту (с учетом inset) */
+            
+            /* Эффект стекла */
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            
+            border-radius: 24px;
+            
+            /* Структура Flexbox */
+            display: flex;
+            flex-direction: column;
+            
+            /* Анимация выезда снизу */
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            
+            overflow: hidden; /* Важно для скругления углов */
+        }
+
+        .modal-overlay.visible .modal-content {
+            transform: translateY(0);
+        }
+
+        /* Шапка модалки (фиксированная) */
+        .modal-header-fixed {
+            flex-shrink: 0;
+            padding: 20px 20px 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
+            z-index: 2;
+        }
+
+        .modal-header-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .modal-sign-img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px rgba(155, 77, 255, 0.6));
+        }
+
+        .modal-titles {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.1;
+        }
+
+        .modal-subtitle {
+            font-size: 0.75rem;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .modal-close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-close-btn:active { 
+            background: rgba(255, 255, 255, 0.25); 
+            transform: scale(0.9);
+        }
+
+        /* Тело модалки (скроллящееся) */
+        .modal-body-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 24px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .modal-body-scroll::-webkit-scrollbar { 
+            display: none; /* Chrome/Safari */
+        }
+
+        .modal-text-body {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: #e3e3fc;
+            white-space: pre-wrap;
+            text-align: left;
+            min-height: 100px; /* Чтобы курсор был виден сразу */
+        }
+
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 1s step-start infinite;
+            color: var(--primary);
+            margin-left: 2px;
+            font-weight: bold;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Подвал модалки (пустой, так как реклама только на главном) */
+        .modal-footer-ad {
+            flex-shrink: 0;
+            width: 100%;
+            height: 10px; /* Минимальная высота, так как рекламы тут нет */
+            background: transparent;
+        }
+
+        /* VK Ad Banner Styles (для главного экрана) */
+        #vk-ad-banner {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: rgba(19, 19, 41, 0.95);
+            z-index: 50;
+            display: none; 
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <header class="main-header" id="main-header">
+            <h1>✨ Звёздный Гид</h1>
+        </header>
+
+        <div class="screen-container">
+            <!-- Экран выбора знака -->
+            <main id="selection-screen" class="screen active">
+                <div class="loading" id="loading">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">🔮</div>
+                    <div>Связь с космосом...</div>
+                </div>
+
+                <div id="user-profile-block" class="user-profile" style="display: none;">
+                    <img id="user-avatar" class="user-avatar" src="" alt="Avatar">
+                    <div class="user-info">
+                        <span class="user-greeting" id="user-greeting">Привет!</span>
+                        <span class="user-zodiac" id="user-zodiac-sign">Загрузка...</span>
+                    </div>
+                </div>
+
+                <div class="signs-grid" id="signs-grid"></div>
+            </main>
+
+            <!-- Экран деталей -->
+            <main id="horoscope-screen" class="screen">
+                <div class="detail-nav-bar">
+                    <button class="back-btn-text" id="back-button">← Назад</button>
+                    <div class="current-date-display" id="current-date-display">23 апреля</div>
+                </div>
+
+                <div class="control-panel">
+                    <div class="sign-identity-card">
+                        <img class="sign-hero-img" id="h-sign-img" src="" alt="знак">
+                        <div class="sign-hero-name" id="h-name">Овен</div>
+                        <div class="sign-hero-date" id="h-date-range">21 мар — 19 апр</div>
+                    </div>
+
+                    <div class="actions-column">
+                        <div class="tabs-grid">
+                            <button class="tab-btn" data-tab="general">
+                                <span>🔮</span> Общий
+                            </button>
+                            <button class="tab-btn" data-tab="love">
+                                <span>💕</span> Любовь
+                            </button>
+                            <button class="tab-btn" data-tab="business">
+                                <span>💼</span> Работа
+                            </button>
+                            <button class="tab-btn" data-tab="compatibility">
+                                <span>💞</span> Совмест.
+                            </button>
+                        </div>
+                        
+                        <button class="reward-btn" id="tomorrow-btn">
+                            <span class="ad-badge">AD</span>
+                            <span>🌙 Гороскоп на завтра</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="detail-content-scroll">
+                    <div class="scrollable-wrapper">
+                        <div class="friends-label" id="friends-label">
+                            <span>👥</span> Твои друзья этого же знака:
+                        </div>
+                        <div class="friends-strip" id="friends-list"></div>
+                        
+                        <div style="text-align: center; color: var(--text-secondary); font-size: 0.75rem; margin-top: 6px; opacity: 0.4;">
+                            Выберите категорию выше ✨
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Баннер теперь управляется через JS и показывается только на главном экране -->
+                <div id="vk-ad-banner"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- НОВОЕ МОДАЛЬНОЕ ОКНО -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            
+            <!-- Фиксированная шапка -->
+            <div class="modal-header-fixed">
+                <div class="modal-header-info">
+                    <img id="modal-sign-img" class="modal-sign-img" src="" alt="Sign">
+                    <div class="modal-titles">
+                        <div class="modal-title" id="modal-title">Заголовок</div>
+                        <div class="modal-subtitle" id="modal-subtitle">Прогноз звезд</div>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="modal-close-btn">×</button>
+            </div>
+
+            <!-- Скроллящийся текст -->
+            <div class="modal-body-scroll">
+                <div class="modal-text-body typing-cursor" id="modal-text-body"></div>
+            </div>
+
+            <!-- Пустой подвал (реклама убрана отсюда) -->
+            <div class="modal-footer-ad"></div>
+            
+        </div>
+    </div>
+
+    <script>
+        const ZODIAC_SIGNS = {
+            aries: { name: 'Овен', date: '21 марта — 19 апреля', img: 'img/Aries.png' },
+            taurus: { name: 'Телец', date: '20 апреля — 20 мая', img: 'img/Taurus.png' },
+            gemini: { name: 'Близнецы', date: '21 мая — 20 июня', img: 'img/Gemini.png' },
+            cancer: { name: 'Рак', date: '21 июня — 22 июля', img: 'img/Cancer.png' },
+            leo: { name: 'Лев', date: '23 июля — 22 августа', img: 'img/Leo.png' },
+            virgo: { name: 'Дева', date: '23 августа — 22 сентября', img: 'img/Virgo.png' },
+            libra: { name: 'Весы', date: '23 сентября — 22 октября', img: 'img/Libra.png' },
+            scorpio: { name: 'Скорпион', date: '23 октября — 21 ноября', img: 'img/Scorpio.png' },
+            sagittarius: { name: 'Стрелец', date: '22 ноября — 21 декабря', img: 'img/Sagittarius.png' },
+            capricornus: { name: 'Козерог', date: '22 декабря — 19 января', img: 'img/Capricorn.png' },
+            aquarius: { name: 'Водолей', date: '20 января — 18 февраля', img: 'img/Aquarius.png' },
+            pisces: { name: 'Рыбы', date: '19 февраля — 20 марта', img: 'img/Pisces.png' }
+        };
+
+        const COMPATIBILITY_MATRIX = {
+            aries: { aries: 70, taurus: 40, gemini: 80, cancer: 30, leo: 90, virgo: 50, libra: 60, scorpio: 85, sagittarius: 95, capricornus: 40, aquarius: 75, pisces: 50 },
+            taurus: { aries: 40, taurus: 70, gemini: 50, cancer: 90, leo: 60, virgo: 95, libra: 80, scorpio: 75, sagittarius: 40, capricornus: 90, aquarius: 30, pisces: 85 },
+            gemini: { aries: 80, taurus: 50, gemini: 70, cancer: 60, leo: 75, virgo: 60, libra: 90, scorpio: 50, sagittarius: 85, capricornus: 50, aquarius: 95, pisces: 40 },
+            cancer: { aries: 30, taurus: 90, gemini: 60, cancer: 70, leo: 50, virgo: 80, libra: 70, scorpio: 95, sagittarius: 30, capricornus: 85, aquarius: 40, pisces: 90 },
+            leo: { aries: 90, taurus: 60, gemini: 75, cancer: 50, leo: 70, virgo: 40, libra: 85, scorpio: 60, sagittarius: 95, capricornus: 50, aquarius: 60, pisces: 40 },
+            virgo: { aries: 50, taurus: 95, gemini: 60, cancer: 80, leo: 40, virgo: 70, libra: 85, scorpio: 60, sagittarius: 40, capricornus: 90, aquarius: 50, pisces: 75 },
+            libra: { aries: 60, taurus: 80, gemini: 90, cancer: 70, leo: 85, virgo: 85, libra: 70, scorpio: 50, sagittarius: 70, capricornus: 60, aquarius: 85, pisces: 80 },
+            scorpio: { aries: 85, taurus: 75, gemini: 50, cancer: 95, leo: 60, virgo: 60, libra: 50, scorpio: 70, sagittarius: 40, capricornus: 80, aquarius: 30, pisces: 95 },
+            sagittarius: { aries: 95, taurus: 40, gemini: 85, cancer: 30, leo: 95, virgo: 40, libra: 70, scorpio: 40, sagittarius: 70, capricornus: 50, aquarius: 85, pisces: 60 },
+            capricornus: { aries: 40, taurus: 90, gemini: 50, cancer: 85, leo: 50, virgo: 90, libra: 60, scorpio: 80, sagittarius: 50, capricornus: 70, aquarius: 60, pisces: 70 },
+            aquarius: { aries: 75, taurus: 30, gemini: 95, cancer: 40, leo: 60, virgo: 50, libra: 85, scorpio: 30, sagittarius: 85, capricornus: 60, aquarius: 70, pisces: 50 },
+            pisces: { aries: 50, taurus: 85, gemini: 40, cancer: 90, leo: 40, virgo: 75, libra: 80, scorpio: 95, sagittarius: 60, capricornus: 70, aquarius: 50, pisces: 70 }
+        };
+
+        let horoscopeCache = null;
+        let currentSignKey = null;
+        let isTomorrowUnlocked = false;
+        let friendsCache = null;
+        let typingInterval = null;
+
+        const PLACEHOLDER_BASE = "https://placehold.co/150x150/4a2f8f/white?text=";
+        const vkBridge = window.vkBridge;
+
+        function initBannerAd() {
+            if (!vkBridge) return;
+            // Инициализация, но показ контролируется отдельно
+            console.log("VK Bridge initialized for ads");
+        }
+
+        // ЕДИНАЯ ФУНКЦИЯ УПРАВЛЕНИЯ БАННЕРОМ
+        // Показывает только если мы на главном экране (selection-screen)
+        function updateBannerVisibility() {
+            const isMainScreen = document.getElementById('selection-screen').classList.contains('active');
+            const bannerContainer = document.getElementById('vk-ad-banner');
+
+            if (isMainScreen) {
+                if (vkBridge) {
+                     vkBridge.send("VKWebAppShowBannerAd", { 
+                        banner_location: "bottom",
+                        can_close: false 
+                    }).catch(e => console.log("Banner show error:", e));
+                }
+                bannerContainer.style.display = 'flex';
+            } else {
+                if (vkBridge) {
+                    vkBridge.send("VKWebAppHideBannerAd").catch(e => console.log("Banner hide error:", e));
+                }
+                bannerContainer.style.display = 'none';
+            }
+        }
+
+        if (vkBridge) {
+            vkBridge.send("VKWebAppInit");
+            initBannerAd();
+        }
+
+        function getZodiacByDate(day, month) {
+            if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return 'aries';
+            if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return 'taurus';
+            if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return 'gemini';
+            if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return 'cancer';
+            if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return 'leo';
+            if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return 'virgo';
+            if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return 'libra';
+            if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return 'scorpio';
+            if ((month === 11 && day >= 22) || (month === 0 && day <= 21)) return 'sagittarius';
+            if ((month === 0 && day >= 22) || (month === 1 && day <= 19)) return 'capricornus';
+            if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return 'aquarius';
+            return 'pisces';
+        }
+
+        async function requestFriendsPermission() {
+            if (!vkBridge) return false;
+            try {
+                const result = await vkBridge.send("VKWebAppGetAuthToken", {
+                    app_id: 54566838,
+                    scope: "friends"
+                });
+                if (result && result.access_token) {
+                    vkAccessToken = result.access_token;
+                    return true;
+                }
+            } catch (error) { return false; }
+            return false;
+        }
+
+        let vkAccessToken = null;
+
+        async function fetchRealFriends() {
+            if (friendsCache) return friendsCache;
+            if (!vkBridge) return [];
+
+            try {
+                if (!vkAccessToken) {
+                    const hasPermission = await requestFriendsPermission();
+                    if (!hasPermission) return [];
+                }
+
+                const response = await vkBridge.send("VKWebAppCallAPIMethod", {
+                    method: "friends.get",
+                    params: {
+                        v: "5.131",
+                        fields: "photo_100,first_name,bdate,sex",
+                        order: "hints",
+                        count: 100,
+                        access_token: vkAccessToken
+                    }
+                });
+
+                if (response && response.response) {
+                    const friends = response.response.items || response.response;
+                    friendsCache = friends;
+                    return friendsCache;
+                } else if (response && response.items) {
+                    friendsCache = response.items;
+                    return friendsCache;
+                }
+            } catch (error) {
+                if (error.error_data?.error_code === 2) {
+                    vkAccessToken = null;
+                    return await fetchRealFriends();
+                }
+            }
+            return [];
+        }
+
+        async function renderFriendsForSign(targetSignKey) {
+            const container = document.getElementById('friends-list');
+            const label = document.getElementById('friends-label');
+            container.innerHTML = '<div style="padding:10px; color:#666; font-size:0.8rem; width:100%; text-align:center;">Загрузка...</div>';
+            label.innerHTML = '<span>👥</span> Друзья этого знака:';
+
+            const allFriends = await fetchRealFriends();
+            container.innerHTML = '';
+
+            if (!allFriends || allFriends.length === 0) {
+                container.innerHTML = '<div style="padding:10px; color:#666; font-size:0.8rem; width:100%; text-align:center;">Нет друзей или нет доступа</div>';
+                return;
+            }
+
+            const matchingFriends = allFriends.filter(friend => {
+                if (friend.bdate) {
+                    const parts = friend.bdate.split('.');
+                    if (parts.length >= 2) {
+                        const day = parseInt(parts[0]);
+                        const month = parseInt(parts[1]);
+                        const friendSign = getZodiacByDate(day, month);
+                        return friendSign === targetSignKey;
+                    }
+                }
+                return false;
+            });
+
+            if (matchingFriends.length === 0) {
+                container.innerHTML = '<div style="padding:10px; color:#666; font-size:0.8rem; width:100%; text-align:center;">У вас нет друзей этого знака 😔</div>';
+                return;
+            }
+
+            const friendsToShow = matchingFriends.slice(0, 15);
+            friendsToShow.forEach(friend => {
+                const name = friend.first_name || "Friend";
+                const photo = friend.photo_100 || `${PLACEHOLDER_BASE}${name[0]}`;
+                const item = document.createElement('div');
+                item.className = 'friend-item';
+                item.innerHTML = `
+                <div class="friend-avatar-wrapper">
+                    <img class="friend-avatar" src="${photo}" alt="${name}">
+                </div>
+                <div class="friend-name">${name}</div>
+            `;
+                container.appendChild(item);
+            });
+        }
+
+        async function renderFriendsCompatibility(mySignKey) {
+            const container = document.getElementById('friends-list');
+            const label = document.getElementById('friends-label');
+            container.innerHTML = '<div style="padding:10px; color:#666; font-size:0.8rem; width:100%; text-align:center;">Считаем звезды...</div>';
+            label.innerHTML = '<span>⚡</span> Твоя совместимость:';
+
+            const allFriends = await fetchRealFriends();
+            container.innerHTML = '';
+
+            if (!allFriends || allFriends.length === 0) {
+                container.innerHTML = '<div style="padding:10px; color:#666; font-size:0.8rem; width:100%; text-align:center;">Нет данных о друзьях</div>';
+                return;
+            }
+
+            let scoredFriends = allFriends
+                .map(friend => {
+                    let score = 50;
+                    let friendSignName = null;
+                    let hasSign = false;
+
+                    if (friend.bdate) {
+                        const parts = friend.bdate.split('.');
+                        if (parts.length >= 2) {
+                            const day = parseInt(parts[0]);
+                            const month = parseInt(parts[1]);
+                            if (!isNaN(day) && !isNaN(month)) {
+                                const fSign = getZodiacByDate(day, month);
+                                if (fSign && ZODIAC_SIGNS[fSign]) {
+                                    hasSign = true;
+                                    friendSignName = ZODIAC_SIGNS[fSign].name;
+                                    if (COMPATIBILITY_MATRIX[mySignKey] && COMPATIBILITY_MATRIX[mySignKey][fSign] !== undefined) {
+                                        score = COMPATIBILITY_MATRIX[mySignKey][fSign];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return hasSign ? { ...friend, score, friendSignName } : null;
+                })
+                .filter(item => item !== null);
+
+            scoredFriends.sort((a, b) => b.score - a.score);
+            const friendsToShow = scoredFriends.slice(0, 30);
+
+            if (friendsToShow.length === 0) {
+                container.innerHTML = '<div style="padding:10px; color:#666; font-size:0.8rem; width:100%; text-align:center;">У друзей скрыты даты рождения 😔</div>';
+                return;
+            }
+
+            friendsToShow.forEach(friend => {
+                const name = friend.first_name || "Friend";
+                const photo = friend.photo_100 || `${PLACEHOLDER_BASE}${name[0]}`;
+                const score = friend.score;
+                const signName = friend.friendSignName || "?";
+                let barColor = '#ff4d4d';
+                if (score >= 80) barColor = '#2be07a';
+                else if (score >= 50) barColor = '#ffcc00';
+
+                const item = document.createElement('div');
+                item.className = 'compat-item';
+                item.innerHTML = `
+                <div class="friend-avatar-wrapper" style="width:45px; height:45px; margin-bottom:4px;">
+                    <img class="friend-avatar" src="${photo}" alt="${name}">
+                </div>
+                <div class="friend-name" style="max-width:60px;">${name}</div>
+                <div style="font-size:0.6rem; color:#aaa; margin-top:2px;">${signName}</div>
+                <div class="compat-bar-bg">
+                    <div class="compat-bar-fill" style="width: ${score}%; background: ${barColor};"></div>
+                </div>
+                <div class="compat-score" style="color: ${barColor}">${score}%</div>
+            `;
+                container.appendChild(item);
+            });
+        }
+
+        async function fetchUserData() {
+            if (!vkBridge) return;
+            try {
+                const response = await vkBridge.send("VKWebAppGetUserInfo", {});
+                if (response) {
+                    const firstName = response.first_name || 'Гость';
+                    const photoUrl = response.photo_100 || response.photo_200 || '';
+                    const bdate = response.bdate;
+
+                    const profileBlock = document.getElementById('user-profile-block');
+                    const avatarImg = document.getElementById('user-avatar');
+                    const greetingEl = document.getElementById('user-greeting');
+                    const zodiacEl = document.getElementById('user-zodiac-sign');
+
+                    avatarImg.src = photoUrl || (PLACEHOLDER_BASE + firstName[0]);
+                    greetingEl.innerText = `Привет, ${firstName}!`;
+
+                    if (bdate) {
+                        const parts = bdate.split('.');
+                        if (parts.length >= 2) {
+                            const signKey = getZodiacByDate(parseInt(parts[0]), parseInt(parts[1]));
+                            zodiacEl.innerText = ZODIAC_SIGNS[signKey] ? `Ты — ${ZODIAC_SIGNS[signKey].name}` : "Знак не определен";
+                        }
+                    } else {
+                        zodiacEl.innerText = "Укажи дату рождения в ВК";
+                    }
+                    profileBlock.style.display = 'flex';
+                }
+            } catch (err) { console.error(err); }
+        }
+
+       async function loadHoroscopeData() {
+            const loadingEl = document.getElementById('loading');
+            const gridEl = document.getElementById('signs-grid');
+            loadingEl.style.display = 'block';
+            gridEl.style.display = 'none';
+            
+            // Загружаем профиль пользователя
+            fetchUserData();
+
+            // --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+            // Добавляем текущее время в миллисекундах к URL. 
+            // Это гарантирует, что каждый запрос будет уникальным и браузер не использует кэш.
+            const baseUrl = 'horoscope-json-updater/refs/heads/main/horoscope_advanced.json';
+            const uniqueUrl = `${baseUrl}?t=${new Date().getTime()}`;
+            // -----------------------
+
+            try {
+                // Делаем запрос по уникальной ссылке
+                const response = await fetch(uniqueUrl);
+                if (!response.ok) throw new Error('Net err');
+                
+                horoscopeCache = await response.json();
+                
+                // Опционально: можно сохранить в localStorage для оффлайн-режима, 
+                // но при следующем запуске мы все равно попробуем скачать свежий.
+                localStorage.setItem('horoscope_data_cache', JSON.stringify(horoscopeCache));
+                
+            } catch (err) {
+                console.error("Ошибка загрузки гороскопа:", err);
+                
+                // Если интернета нет или ошибка, пробуем показать последний сохраненный
+                const cachedData = localStorage.getItem('horoscope_data_cache');
+                if (cachedData) {
+                    horoscopeCache = JSON.parse(cachedData);
+                } else {
+                    generateFallbackData();
+                }
+            }
+
+            renderGrid();
+            loadingEl.style.display = 'none';
+            gridEl.style.display = 'grid';
+
+            const today = new Date();
+            const options = { day: 'numeric', month: 'long' };
+            document.getElementById('current-date-display').innerText = today.toLocaleDateString('ru-RU', options);
+            
+            updateBannerVisibility();
+        }
+
+        function generateFallbackData() {
+            horoscopeCache = {};
+            const texts = {
+                general: "Звёзды советуют быть внимательнее к деталям. Ваша энергия на высоте.",
+                love: "В любовных делах возможен приятный сюрприз.",
+                business: "Финансовая удача на вашей стороне.",
+                tomorrow: "Завтрашний день потребует осторожности."
+            };
+            for (const [key, info] of Object.entries(ZODIAC_SIGNS)) {
+                horoscopeCache[key] = {
+                    general: { text: texts.general },
+                    love: { text: texts.love },
+                    business: { text: texts.business },
+                    tomorrow: { text: texts.tomorrow }
+                };
+            }
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('signs-grid');
+            grid.innerHTML = '';
+            for (const [key, info] of Object.entries(ZODIAC_SIGNS)) {
+                const card = document.createElement('div');
+                card.className = 'sign-card';
+                card.innerHTML = `
+                <img class="sign-img" src="${info.img}" onerror="this.src='${PLACEHOLDER_BASE}${info.name[0]}'" alt="${info.name}">
+                <div class="sign-name">${info.name}</div>
+            `;
+                card.onclick = () => openHoroscope(key);
+                grid.appendChild(card);
+            }
+        }
+
+        function openHoroscope(key) {
+            currentSignKey = key;
+            isTomorrowUnlocked = false;
+            const info = ZODIAC_SIGNS[key];
+
+            document.getElementById('h-sign-img').src = info.img;
+            document.getElementById('h-name').innerText = info.name;
+            document.getElementById('h-date-range').innerText = info.date;
+
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
+            resetTomorrowButton();
+            renderFriendsForSign(key);
+
+            document.getElementById('main-header').style.display = 'none';
+            document.getElementById('selection-screen').classList.remove('active');
+            document.getElementById('horoscope-screen').classList.add('active');
+            
+            // Обновляем видимость баннера (скрываем его, т.к. ушли с главного экрана)
+            updateBannerVisibility();
+        }
+
+        function resetTomorrowButton() {
+            const btn = document.getElementById('tomorrow-btn');
+            btn.classList.remove('unlocked');
+            btn.innerHTML = `<span class="ad-badge">AD</span><span>🔒 Гороскоп на завтра</span>`;
+            btn.disabled = false;
+        }
+
+        function openModal(title, text, signKey) {
+            const modal = document.getElementById('modal-overlay');
+            const titleEl = document.getElementById('modal-title');
+            const subtitleEl = document.getElementById('modal-subtitle');
+            const bodyEl = document.getElementById('modal-text-body');
+            const imgEl = document.getElementById('modal-sign-img');
+
+            if (signKey && ZODIAC_SIGNS[signKey]) {
+                imgEl.src = ZODIAC_SIGNS[signKey].img;
+                imgEl.onerror = function() { this.src = PLACEHOLDER_BASE + ZODIAC_SIGNS[signKey].name[0]; };
+                titleEl.innerText = ZODIAC_SIGNS[signKey].name;
+                
+                if (title.includes('Любовь')) subtitleEl.innerText = "❤️ Любовный прогноз";
+                else if (title.includes('Работа')) subtitleEl.innerText = "💼 Карьера и финансы";
+                else if (title.includes('Совместимость')) subtitleEl.innerText = "💞 Анализ связей";
+                else if (title.includes('завтра')) subtitleEl.innerText = "🌙 Прогноз на завтра";
+                else subtitleEl.innerText = "🔮 Общий прогноз";
+            } else {
+                imgEl.src = "";
+                titleEl.innerText = title;
+                subtitleEl.innerText = "";
+            }
+
+            bodyEl.innerText = ""; 
+            
+            modal.classList.add('visible');
+            
+            // Реклама внутри модалки больше не вызывается
+
+            let i = 0;
+            const speed = 15; // Скорость печати (мс)
+            
+            if (typingInterval) clearInterval(typingInterval);
+            
+            // Скроллим вверх перед началом печати
+            const scrollContainer = document.querySelector('.modal-body-scroll');
+            if(scrollContainer) scrollContainer.scrollTop = 0;
+
+            typingInterval = setInterval(() => {
+                if (i < text.length) {
+                    bodyEl.innerText += text.charAt(i);
+                    i++;
+                    // Автопрокрутка вниз при печати
+                    if(scrollContainer) {
+                         scrollContainer.scrollTop = scrollContainer.scrollHeight;
+                    }
+                } else {
+                    clearInterval(typingInterval);
+                    bodyEl.classList.remove('typing-cursor');
+                }
+            }, speed);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal-overlay');
+            modal.classList.remove('visible');
+            if (typingInterval) clearInterval(typingInterval);
+            
+            // При закрытии модалки проверяем, нужно ли вернуть баннер
+            // Если мы вернулись на главный экран (хотя модалка поверх всего, логика зависит от того, какой экран активен под ней)
+            // Но обычно модалка закрывается на экране деталей. В этом случае баннер не нужен.
+            // Если модалка была вызвана с главного экрана (гипотетически), то баннер должен остаться.
+            updateBannerVisibility();
+        }
+
+        function showFullScreenAd(onSuccess) {
+            if (!vkBridge) {
+                onSuccess();
+                return;
+            }
+
+            vkBridge.send("VKWebAppShowNativeAds", { ad_format: "interstitial" })
+                .then((data) => {
+                    if (data.result) {
+                        onSuccess();
+                    } else {
+                        onSuccess();
+                    }
+                })
+                .catch((error) => {
+                    console.log("Ошибка показа рекламы:", error);
+                    onSuccess();
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHoroscopeData();
+
+            document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+
+            document.getElementById('back-button').addEventListener('click', () => {
+                document.getElementById('horoscope-screen').classList.remove('active');
+                document.getElementById('selection-screen').classList.add('active');
+                document.getElementById('main-header').style.display = 'flex';
+                
+                // Возвращаемся на главный экран -> включаем баннер
+                updateBannerVisibility();
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const target = e.currentTarget;
+                    const type = target.dataset.tab;
+
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
+                    target.classList.add('active-tab');
+
+                    if (type === 'compatibility') {
+                        renderFriendsCompatibility(currentSignKey);
+                    } else {
+                        renderFriendsForSign(currentSignKey); 
+
+                        let text = "Загрузка...";
+                        if (horoscopeCache && horoscopeCache[currentSignKey] && horoscopeCache[currentSignKey][type]) {
+                            text = horoscopeCache[currentSignKey][type].text;
+                        } else {
+                            text = "Звёзды молчат... Попробуйте позже.";
+                        }
+
+                        openModal(target.innerText.trim(), text, currentSignKey);
+                    }
+                });
+            });
+
+            document.getElementById('tomorrow-btn').addEventListener('click', function() {
+                const btn = this;
+                
+                if (btn.classList.contains('unlocked')) {
+                    let text = "Загрузка...";
+                    if (horoscopeCache && horoscopeCache[currentSignKey] && horoscopeCache[currentSignKey]['tomorrow']) {
+                        text = horoscopeCache[currentSignKey]['tomorrow'].text;
+                    } else {
+                        text = "Завтра будет интересный день. Звезды рекомендуют быть начеку.";
+                    }
+                    openModal("Гороскоп на завтра", text, currentSignKey);
+                } 
+                else {
+                    showFullScreenAd(() => {
+                        btn.classList.add('unlocked');
+                        btn.innerHTML = `<span>✅ Показать гороскоп</span>`;
+                    });
+                }
+            });
+        
+            const slider = document.querySelector('.friends-strip');
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            if (slider) {
+                slider.addEventListener('dragstart', (e) => e.preventDefault());
+                slider.addEventListener('mousedown', (e) => {
+                    isDown = true;
+                    slider.style.cursor = 'grabbing';
+                    startX = e.pageX - slider.offsetLeft;
+                    scrollLeft = slider.scrollLeft;
+                });
+                slider.addEventListener('mouseleave', () => { isDown = false; slider.style.cursor = 'grab'; });
+                slider.addEventListener('mouseup', () => { isDown = false; slider.style.cursor = 'grab'; });
+                slider.addEventListener('mousemove', (e) => {
+                    if (!isDown) return;
+                    e.preventDefault();
+                    const x = e.pageX - slider.offsetLeft;
+                    const walk = (x - startX) * 2;
+                    slider.scrollLeft = scrollLeft - walk;
+                });
+                slider.style.cursor = 'grab';
+            }
+        });
+    </script>
+</body>
+</html>
