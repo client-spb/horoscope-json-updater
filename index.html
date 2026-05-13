@@ -7,6 +7,7 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>✨ Звёздный Гид | Гороскоп</title>
     <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+    <script src="vk-bridge-mock.js"></script>
     <style>
         * {
             margin: 0;
@@ -384,17 +385,17 @@
         }
         
         .reward-btn.unlocked {
-            background: var(--success-gradient);
+            background: linear-gradient(135deg, #4a9eff, #2b7ce0);
             color: #fff;
             border: none;
-            box-shadow: 0 4px 15px rgba(43, 224, 122, 0.3);
-            animation: pulseGreen 2s infinite;
+            box-shadow: 0 4px 15px rgba(74, 158, 255, 0.4);
+            animation: pulseBlue 2s infinite;
         }
 
-        @keyframes pulseGreen {
-            0% { box-shadow: 0 0 0 0 rgba(43, 224, 122, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(43, 224, 122, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(43, 224, 122, 0); }
+        @keyframes pulseBlue {
+            0% { box-shadow: 0 0 0 0 rgba(74, 158, 255, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(74, 158, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 158, 255, 0); }
         }
 
         .reward-btn:active { transform: scale(0.98); }
@@ -1354,11 +1355,11 @@
             
             // Проверяем, смотрел ли пользователь рекламу сегодня
             if (hasWatchedAdToday()) {
-                // Если реклама уже была просмотрена сегодня - кнопка должна быть разблокирована
+                // Если реклама уже была просмотрена сегодня - кнопка должна быть разблокирована (синяя)
                 btn.classList.add('unlocked');
-                btn.innerHTML = `<span>✅ Показать гороскоп</span>`;
+                btn.innerHTML = `<span>🌙 Гороскоп на завтра</span>`;
             } else {
-                // Если реклама не смотрелась - сбрасываем кнопку
+                // Если реклама не смотрелась - сбрасываем кнопку (с замочком)
                 btn.classList.remove('unlocked');
                 btn.innerHTML = `<span class="ad-badge">AD</span><span>🔒 Гороскоп на завтра</span>`;
             }
@@ -1438,14 +1439,13 @@
 
             vkBridge.send("VKWebAppShowNativeAds", { ad_format: "interstitial" })
                 .then((data) => {
-                    if (data.result) {
-                        onSuccess();
-                    } else {
-                        onSuccess();
-                    }
+                    console.log("Реклама показана:", data);
+                    // Всегда вызываем onSuccess, так как реклама была показана (или пользователь закрыл её)
+                    onSuccess();
                 })
                 .catch((error) => {
                     console.log("Ошибка показа рекламы:", error);
+                    // В случае ошибки всё равно даём доступ
                     onSuccess();
                 });
         }
@@ -1480,6 +1480,13 @@
             checkAndResetAdStatus();
             
             loadHoroscopeData();
+
+            // Обновляем кнопку "Гороскоп на завтра" при загрузке страницы
+            const tomorrowBtn = document.getElementById('tomorrow-btn');
+            if (tomorrowBtn && hasWatchedAdToday()) {
+                tomorrowBtn.classList.add('unlocked');
+                tomorrowBtn.innerHTML = `<span>🌙 Гороскоп на завтра</span>`;
+            }
 
             document.getElementById('modal-close-btn').addEventListener('click', closeModal);
             document.getElementById('permission-modal-close-btn').addEventListener('click', closePermissionModal);
@@ -1574,7 +1581,7 @@
                     showFullScreenAd(() => {
                         markAdAsWatched();
                         btn.classList.add('unlocked');
-                        btn.innerHTML = `<span>✅ Показать гороскоп</span>`;
+                        btn.innerHTML = `<span>🌙 Гороскоп на завтра</span>`;
                     });
                 }
             });
