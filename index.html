@@ -1126,7 +1126,7 @@
                                 updateFriendsPermissionUI();
                                 renderFriendsCompatibility(mySignKey);
                             } else {
-                                alert('Не удалось получить доступ к друзьям. Попробуйте позже.');
+                                console.warn('Не удалось получить доступ к друзьям.');
                             }
                         });
                     }
@@ -1454,7 +1454,7 @@
                 if (hasPermission) {
                     updateFriendsPermissionUI();
                 } else {
-                    alert('Не удалось получить доступ к друзьям. Попробуйте позже.');
+                    console.warn('Не удалось получить доступ к друзьям.');
                 }
             });
 
@@ -1466,7 +1466,7 @@
                     // После предоставления прав обновляем UI для обоих разделов
                     updateFriendsPermissionUI();
                 } else {
-                    alert('Не удалось получить доступ к друзьям. Попробуйте позже.');
+                    console.warn('Не удалось получить доступ к друзьям.');
                     closePermissionModal();
                 }
             });
