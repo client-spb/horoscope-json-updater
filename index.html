@@ -927,6 +927,14 @@
 
         let friendsPermissionGranted = false;
 
+        // Проверяем сохранённый статус прав доступа при загрузке
+        function checkFriendsPermissionStatus() {
+            const saved = localStorage.getItem('friends_permission_granted');
+            if (saved === 'true') {
+                friendsPermissionGranted = true;
+            }
+        }
+
         async function requestFriendsPermission() {
             if (!vkBridge) return false;
             try {
@@ -937,6 +945,7 @@
                 if (result && result.access_token) {
                     vkAccessToken = result.access_token;
                     friendsPermissionGranted = true;
+                    localStorage.setItem('friends_permission_granted', 'true');
                     updateFriendsPermissionUI();
                     return true;
                 }
@@ -1087,14 +1096,22 @@
         function updateFriendsPermissionUI() {
             friendsPermissionGranted = true;
             
-            // Обновляем блок кнопки запроса прав
+            // Обновляем блок кнопки запроса прав - скрываем его
             const permissionBlock = document.getElementById('friends-permission-block');
             if (permissionBlock) {
                 permissionBlock.style.display = 'none';
             }
             
+            // Показываем лейбл друзей
+            const label = document.getElementById('friends-label');
+            if (label) {
+                label.style.display = 'flex';
+            }
+            
             // Обновляем список друзей для текущего знака
-            renderFriendsForSign(currentSignKey);
+            if (currentSignKey) {
+                renderFriendsForSign(currentSignKey);
+            }
         }
 
         async function renderFriendsCompatibility(mySignKey) {
@@ -1328,18 +1345,16 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
             resetTomorrowButton();
             
-            // Показываем или скрываем кнопку запроса прав в зависимости от статуса
-            const permissionBlock = document.getElementById('friends-permission-block');
-            const label = document.getElementById('friends-label');
-            
-            if (!friendsPermissionGranted) {
+            // Если права на друзей уже предоставлены, сразу показываем друзей
+            if (friendsPermissionGranted) {
+                renderFriendsForSign(key); // Загрузит друзей
+            } else {
+                // Показываем кнопку запроса прав
+                const permissionBlock = document.getElementById('friends-permission-block');
+                const label = document.getElementById('friends-label');
                 permissionBlock.style.display = 'block';
                 label.style.display = 'none';
                 renderFriendsForSign(key); // Покажет сообщение о необходимости нажать кнопку
-            } else {
-                permissionBlock.style.display = 'none';
-                label.style.display = 'flex';
-                renderFriendsForSign(key); // Загрузит друзей
             }
 
             document.getElementById('main-header').style.display = 'none';
@@ -1479,6 +1494,9 @@
             // Проверяем и сбрасываем статус рекламы при наступлении нового дня
             checkAndResetAdStatus();
             
+            // Проверяем сохранённый статус прав доступа к друзьям
+            checkFriendsPermissionStatus();
+            
             loadHoroscopeData();
 
             // Обновляем кнопку "Гороскоп на завтра" при загрузке страницы
@@ -1486,6 +1504,11 @@
             if (tomorrowBtn && hasWatchedAdToday()) {
                 tomorrowBtn.classList.add('unlocked');
                 tomorrowBtn.innerHTML = `<span>🌙 Гороскоп на завтра</span>`;
+            }
+            
+            // Если права на друзей уже предоставлены, обновляем UI
+            if (friendsPermissionGranted) {
+                updateFriendsPermissionUI();
             }
 
             document.getElementById('modal-close-btn').addEventListener('click', closeModal);
